@@ -1,0 +1,16 @@
+﻿body {
+	background: #333;
+}
+
+#gameName{
+	color: #f55;
+	font-size: 36px;
+	font-family: Courier;
+	font-weight: bold;
+	text-align: center;
+}
+
+#game{
+	display: block;
+	margin: 50px auto 0px;
+}
