@@ -1,26 +1,62 @@
 ﻿var ctx = null;
-var gameMap = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 1, 1, 1, 0, 1, 1, 1, 1, 0,
-    0, 1, 0, 0, 0, 1, 0, 0, 0, 0,
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-    0, 1, 0, 1, 0, 0, 0, 1, 1, 0,
-    0, 1, 0, 1, 0, 1, 0, 0, 1, 0,
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-    0, 1, 0, 0, 0, 0, 0, 1, 0, 0,
-    0, 1, 1, 1, 0, 1, 1, 1, 1, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+rad = 2;
+var gameMap = [  
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 3, 0,
+    0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0,
+    0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0,
+    0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+    0, 0, 1, 2, 2, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
+    0, 0, 1, 0, 0, 0, 3, 0, 5, 0, 5, 0, 1, 0, 1, 0,
+    0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0,
+    0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 6, 0, 1, 0,
+    0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+    0, 3, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 ];
 var tileW = 40, tileH = 40;
-var mapW = 10, mapH = 10;
+var mapW = 16, mapH = 13;
 var currentSecond = 0, frameCount = 0, framesLastSecond = 0, lastFrameTime = 0;
 
 var tileEvents = {
-    88: endGame
+    140: foundExit,
+    83: foundDeath,
+    84: foundDeath,
+    30: function(){ drawLever(30);},
+    102: function(){ drawLever(102);},
+    161: function(){ drawLever(161);},
+    106: function (c) { c.placeAt(10, 1); },
+    104: function (c) { c.placeAt(8, 1); }
+};
+
+function foundDeath() {
+    alert("You are dead! Try again!");
+    window.location.reload();
+};
+
+function foundExit() {
+    alert("Congratulations! You Won!");
+    window.location.reload();
+};
+
+function drawLever(d) {
+	switch(d) {
+		case 30: gameMap[129] = (gameMap[129] == 0 ? 1 : 0);
+		gameMap[30] = (gameMap[30] == 3 ? 4 : 3);
+		break;
+		case 102: gameMap[137] = (gameMap[137] == 0 ? 1 : 0);
+		gameMap[102] = (gameMap[102] == 3 ? 4 : 3);
+		break;
+		case 161: gameMap[158] = (gameMap[158] == 0 ? 1 : 0);
+		gameMap[161] = (gameMap[161] == 3 ? 4 : 3);
+		break;
+	}
+
 };
 
 function endGame() {
     alert("You Won!");
+    window.location.reload();
 }
 
 var keysDown = {
@@ -33,11 +69,23 @@ var keysDown = {
 var player = new Character();
 
 var grass = new Image();
-grass.src = "grass.jpg";
+grass.src = "grass.png";
+var dark = new Image();
+dark.src = "darkness.png";
 var wall = new Image();
-wall.src = "wall.jpg";
+wall.src = "wall.png";
 var iPlayer = new Image();
-iPlayer.src = "player.jpg";
+iPlayer.src = "player.png";
+var finish = new Image();
+finish.src = "finish.png";
+var switchOn = new Image();
+switchOn.src = "switchOn.png";
+var switchOff = new Image();
+switchOff.src = "switchOff.png";
+var portal = new Image();
+portal.src = "portal.png";
+var trap = new Image();
+trap.src = "trap.png";
 
 function Character() {
     this.tileFrom = [1, 1];
@@ -45,9 +93,9 @@ function Character() {
     this.timeMoved = 0;
     this.dimensions = [30, 30];
     this.position = [45, 45];
-    this.delayMove = 350;
-
+    this.delayMove = 200;
 }
+
 Character.prototype.placeAt = function (x, y) {
     this.tileFrom = [x, y];
     this.tileTo = [x, y];
@@ -60,9 +108,9 @@ Character.prototype.processMovement = function (t) {
     if ((t - this.timeMoved) >= this.delayMove) {
         this.placeAt(this.tileTo[0], this.tileTo[1]);
 
-        if (typeof tileEvents[toIndex(this.tileTo[0], this.tileTo[1])] != 'undefined') {
-            tileEvents[toIndex(this.tileTo[0], this.tileTo[1])](this);
-        }
+    if (typeof tileEvents[toIndex(this.tileTo[0], this.tileTo[1])] != 'undefined') {
+        tileEvents[toIndex(this.tileTo[0], this.tileTo[1])](this);
+    }
 
     }
     else {
@@ -117,10 +165,10 @@ function drawGame() {
     else frameCount++;
 
     if (!player.processMovement(currentFrameTime)) {
-        if (keysDown[38] && player.tileFrom[1] > 0 && gameMap[toIndex(player.tileFrom[0], player.tileFrom[1] - 1)] == 1) { player.tileTo[1] -= 1; }
-        else if (keysDown[40] && player.tileFrom[1] < (mapH - 1) && gameMap[toIndex(player.tileFrom[0], player.tileFrom[1] + 1)] == 1) { player.tileTo[1] += 1; }
-        else if (keysDown[37] && player.tileFrom[0] > 0 && gameMap[toIndex(player.tileFrom[0] - 1, player.tileFrom[1])] == 1) { player.tileTo[0] -= 1; }
-        else if (keysDown[39] && player.tileFrom[0] < (mapW - 1) && gameMap[toIndex(player.tileFrom[0] + 1, player.tileFrom[1])] == 1) { player.tileTo[0] += 1; }
+        if (keysDown[38] && player.tileFrom[1] > 0 && gameMap[toIndex(player.tileFrom[0], player.tileFrom[1] - 1)] >= 1) { player.tileTo[1] -= 1; }
+        else if (keysDown[40] && player.tileFrom[1] < (mapH - 1) && gameMap[toIndex(player.tileFrom[0], player.tileFrom[1] + 1)] >= 1) { player.tileTo[1] += 1; }
+        else if (keysDown[37] && player.tileFrom[0] > 0 && gameMap[toIndex(player.tileFrom[0] - 1, player.tileFrom[1])] >= 1) { player.tileTo[0] -= 1; }
+        else if (keysDown[39] && player.tileFrom[0] < (mapW - 1) && gameMap[toIndex(player.tileFrom[0] + 1, player.tileFrom[1])] >= 1) { player.tileTo[0] += 1; }
 
         if (player.tileFrom[0] != player.tileTo[0] || player.tileFrom[1] != player.tileTo[1])
         { player.timeMoved = currentFrameTime; }
@@ -128,20 +176,35 @@ function drawGame() {
 
     for (var y = 0; y < mapH; ++y) {
         for (var x = 0; x < mapW; ++x) {
-            switch (gameMap[((y * mapW) + x)]) {
-                case 0:
-                    ctx.drawImage(wall, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
-                    break;
-                case 1:
-                    ctx.drawImage(grass, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
+            if(x < player.tileFrom[0] - rad || x > player.tileFrom[0] + rad || y < player.tileFrom[1] - rad || y > player.tileFrom[1] + rad ){ctx.drawImage(dark, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH)}
+            else {
+                switch (gameMap[((y * mapW) + x)]) {
+
+                    case 0:
+                        ctx.drawImage(wall, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
+                        break;                        
+                    case 1:
+                        ctx.drawImage(grass, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
+                        break;
+                    case 2: 
+                        ctx.drawImage(trap, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
+                        break;
+                    case 3: 
+                        ctx.drawImage(switchOff, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
+                        break;
+                    case 4: 
+                        ctx.drawImage(switchOn, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
+                        break;
+                    case 5: 
+                        ctx.drawImage(portal, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH)
+                        break;
+                    case 6: 
+                        ctx.drawImage(finish, 0, 0, 40, 40, x * tileW, y * tileH, tileW, tileH);
+                }
             }
         }
     }
-
-    /*ctx.fillStyle = "#0000ff";
-    ctx.fillRect(player.position[0], player.position[1],
-        player.dimensions[0], player.dimensions[1]);*/
-    ctx.drawImage(iPlayer, 5, 5, 35, 35, player.position[0], player.position[1],
+    ctx.drawImage(iPlayer, 0, 0, 30, 30, player.position[0], player.position[1],
         player.dimensions[0], player.dimensions[1]);
 
 
